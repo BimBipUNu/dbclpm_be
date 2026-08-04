@@ -20,6 +20,10 @@ export class ProductService {
           categories: {
             create: data.category_ids.map((id) => ({ category_id: id })),
           },
+          // Lưu hình ảnh sản phẩm
+          images: {
+            create: (data.images || []).map(url => ({ image_url: url })),
+          }
         },
       });
 
@@ -101,12 +105,15 @@ export class ProductService {
   /**
    * Lấy danh sách sản phẩm (Phân trang)
    */
-  public async getProducts(page: number = 1, limit: number = 10, category_id?: number) {
+  public async getProducts(page: number = 1, limit: number = 10, category_id?: number, search_query?: string) {
     const skip = (page - 1) * limit;
 
     const where: any = { status: "Active" };
     if (category_id) {
       where.categories = { some: { category_id } };
+    }
+    if (search_query) {
+      where.product_name = { contains: search_query };
     }
 
     const [products, total] = await Promise.all([
@@ -135,5 +142,62 @@ export class ProductService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  public async updateProduct(product_id: number, data: CreateProductInput) {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Cập nhật thông tin cơ bản
+      const product = await tx.product.update({
+        where: { product_id },
+        data: {
+          brand_id: data.brand_id,
+          product_name: data.product_name,
+          description: data.description ?? null,
+          thumbnail: data.thumbnail ?? null,
+          product_type: data.product_type,
+        },
+      });
+
+      // 2. Cập nhật danh mục
+      await tx.productCategory.deleteMany({ where: { product_id } });
+      await tx.productCategory.createMany({
+        data: data.category_ids.map(id => ({ product_id, category_id: id }))
+      });
+
+      // 3. Cập nhật hình ảnh phụ
+      await tx.productImage.deleteMany({ where: { product_id } });
+      if (data.images && data.images.length > 0) {
+        await tx.productImage.createMany({
+          data: data.images.map(url => ({ product_id, image_url: url }))
+        });
+      }
+
+      // 4. Cập nhật Tồn kho và Giá cho các biến thể hiện có theo SKU
+      for (const variant of data.variants) {
+        await tx.productVariant.updateMany({
+          where: { product_id, sku: variant.sku },
+          data: {
+            price: variant.price,
+            stock_quantity: variant.stock_quantity,
+            image_url: variant.image_url ?? null,
+          }
+        });
+      }
+
+      return product;
+    });
+  }
+
+  public async updateProductStatus(product_id: number, status: "Active" | "Inactive") {
+    return await prisma.product.update({
+      where: { product_id },
+      data: { status },
+    });
+  }
+
+  public async deleteProduct(product_id: number) {
+    return await prisma.product.delete({
+      where: { product_id },
+    });
   }
 }

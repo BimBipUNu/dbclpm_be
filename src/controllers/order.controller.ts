@@ -29,7 +29,51 @@ export class OrderController {
       const orders = await orderService.getMyOrders(userId);
       res.status(200).json(orders);
     } catch (error: any) {
-      res.status(500).json({ message: "Lỗi hệ thống." });
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    }
+  }
+
+  // ============================================
+  // ADMIN ENDPOINTS
+  // ============================================
+  public async getAllOrders(req: Request, res: Response) {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const status = req.query.status ? String(req.query.status) : undefined;
+
+      const result = await orderService.getAllOrders(page, limit, status);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    }
+  }
+
+  public async getOrderDetailAdmin(req: Request, res: Response) {
+    try {
+      const orderId = parseInt(req.params.id as string);
+      const order = await orderService.getOrderDetailAdmin(orderId);
+      
+      if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+      
+      res.status(200).json({ data: order });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    }
+  }
+
+  public async updateOrderStatus(req: any, res: Response) {
+    try {
+      const orderId = parseInt(req.params.id as string);
+      const { status } = req.body;
+      const staffId = req.user.user_id;
+
+      if (!status) return res.status(400).json({ message: "Trạng thái không hợp lệ" });
+
+      const updated = await orderService.updateOrderStatus(orderId, status, staffId);
+      res.status(200).json({ message: "Cập nhật trạng thái thành công", data: updated });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
     }
   }
 

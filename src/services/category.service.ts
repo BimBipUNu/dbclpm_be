@@ -21,7 +21,7 @@ export class CategoryService {
     const categoryMap = new Map<number, CategoryTreeItem>();
 
     // Initialize all items in the map
-    categories.forEach((cat) => {
+    categories.forEach((cat: any) => {
       categoryMap.set(cat.category_id, {
         category_id: cat.category_id,
         category_name: cat.category_name,
@@ -34,7 +34,7 @@ export class CategoryService {
     const rootCategories: CategoryTreeItem[] = [];
 
     // Build the tree
-    categories.forEach((cat) => {
+    categories.forEach((cat: any) => {
       const node = categoryMap.get(cat.category_id);
       if (!node) return;
 
@@ -52,5 +52,29 @@ export class CategoryService {
     });
 
     return rootCategories;
+  }
+
+  public async updateCategory(id: number, data: Partial<CreateCategoryInput>) {
+    const updateData: any = {};
+    if (data.category_name !== undefined) updateData.category_name = data.category_name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.parent_id !== undefined) updateData.parent_id = data.parent_id;
+
+    return await prisma.category.update({
+      where: { category_id: id },
+      data: updateData,
+    });
+  }
+
+  public async deleteCategory(id: number) {
+    // Check if category has children
+    const children = await prisma.category.findMany({ where: { parent_id: id } });
+    if (children.length > 0) {
+      throw new Error("Cannot delete category with sub-categories");
+    }
+    
+    return await prisma.category.delete({
+      where: { category_id: id },
+    });
   }
 }

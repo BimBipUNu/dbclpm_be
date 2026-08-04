@@ -10,6 +10,10 @@ import cartRoutes from "./routes/cart.routes";
 import orderRoutes from "./routes/order.routes";
 import reviewRoutes from "./routes/review.routes";
 import blogRoutes from "./routes/blog.routes";
+import brandRoutes from "./routes/brand.routes";
+import userRoutes from "./routes/user.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
+import blogCategoryRoutes from "./routes/blogCategory.routes";
 
 const app = express();
 
@@ -26,6 +30,10 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use("/api/blog-categories", blogCategoryRoutes);
+app.use("/api/brands", brandRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Bật CronJobs chạy nền
 import { startCronJobs } from "./services/cron.service";

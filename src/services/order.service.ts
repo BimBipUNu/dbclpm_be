@@ -112,9 +112,6 @@ export class OrderService {
     };
   }
 
-  /**
-   * Lấy lịch sử đơn hàng của User
-   */
   public async getMyOrders(userId: number) {
     return await prisma.order.findMany({
       where: { user_id: userId },
@@ -123,6 +120,56 @@ export class OrderService {
         payments: true
       },
       orderBy: { order_date: "desc" }
+    });
+  }
+
+  // ============================================
+  // ADMIN FUNCTIONS
+  // ============================================
+  public async getAllOrders(page: number, limit: number, status?: string) {
+    const skip = (page - 1) * limit;
+    const where = status ? { order_status: status as any } : {};
+
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          user: { select: { full_name: true, email: true, phone: true } },
+          payments: { select: { payment_status: true } }
+        },
+        orderBy: { order_date: "desc" }
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    return {
+      data: orders,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  public async getOrderDetailAdmin(orderId: number) {
+    return await prisma.order.findUnique({
+      where: { order_id: orderId },
+      include: {
+        user: { select: { full_name: true, email: true, phone: true, address: true } },
+        details: { include: { variant: { include: { product: true } } } },
+        payments: true
+      }
+    });
+  }
+
+  public async updateOrderStatus(orderId: number, status: string, staffId: number) {
+    return await prisma.order.update({
+      where: { order_id: orderId },
+      data: { 
+        order_status: status as any,
+        staff_id: staffId
+      }
     });
   }
 }

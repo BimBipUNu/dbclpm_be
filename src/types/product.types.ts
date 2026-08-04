@@ -30,4 +30,5 @@ export interface CreateProductInput {
   product_type: ProductType;
   options: OptionInput[];
   variants: VariantInput[];
+  images?: string[];
 }

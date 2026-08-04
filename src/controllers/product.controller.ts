@@ -46,9 +46,51 @@ export class ProductController {
       const page = parseInt(req.query.page as any) || 1;
       const limit = parseInt(req.query.limit as any) || 10;
       const categoryId = req.query.category_id ? parseInt(req.query.category_id as any) : undefined;
+      const searchQuery = req.query.search ? String(req.query.search) : undefined;
 
-      const result = await productService.getProducts(page, limit, categoryId);
+      const result = await productService.getProducts(page, limit, categoryId, searchQuery);
       res.status(200).json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    }
+  }
+
+  public async updateProduct(req: Request, res: Response) {
+    try {
+      const productId = parseInt(req.params.id as string);
+      const data = req.body;
+      
+      if (!data.product_name || !data.brand_id || !data.product_type) {
+        return res.status(400).json({ message: "Thiếu trường dữ liệu bắt buộc" });
+      }
+
+      const product = await productService.updateProduct(productId, data);
+      res.status(200).json({ message: "Cập nhật sản phẩm thành công", data: product });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    }
+  }
+
+  public async updateProductStatus(req: Request, res: Response) {
+    try {
+      const productId = parseInt(req.params.id as string);
+      const { status } = req.body;
+      if (!status || !['Active', 'Inactive'].includes(status)) {
+        return res.status(400).json({ message: "Trạng thái không hợp lệ" });
+      }
+
+      await productService.updateProductStatus(productId, status as any);
+      res.status(200).json({ message: "Cập nhật trạng thái thành công" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    }
+  }
+
+  public async deleteProduct(req: Request, res: Response) {
+    try {
+      const productId = parseInt(req.params.id as string);
+      await productService.deleteProduct(productId);
+      res.status(200).json({ message: "Xóa sản phẩm thành công" });
     } catch (error: any) {
       res.status(500).json({ message: error.message || "Lỗi hệ thống" });
     }
