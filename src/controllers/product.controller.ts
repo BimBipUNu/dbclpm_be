@@ -47,8 +47,14 @@ export class ProductController {
       const limit = parseInt(req.query.limit as any) || 10;
       const categoryId = req.query.category_id ? parseInt(req.query.category_id as any) : undefined;
       const searchQuery = req.query.search ? String(req.query.search) : undefined;
+      
+      let minPrice = req.query.min_price ? parseFloat(req.query.min_price as any) : undefined;
+      let maxPrice = req.query.max_price ? parseFloat(req.query.max_price as any) : undefined;
+      
+      if (minPrice !== undefined && isNaN(minPrice)) minPrice = undefined;
+      if (maxPrice !== undefined && isNaN(maxPrice)) maxPrice = undefined;
 
-      const result = await productService.getProducts(page, limit, categoryId, searchQuery);
+      const result = await productService.getProducts(page, limit, categoryId, searchQuery, minPrice, maxPrice);
       res.status(200).json(result);
     } catch (error: any) {
       res.status(500).json({ message: error.message || "Lỗi hệ thống" });

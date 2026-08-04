@@ -105,7 +105,14 @@ export class ProductService {
   /**
    * Lấy danh sách sản phẩm (Phân trang)
    */
-  public async getProducts(page: number = 1, limit: number = 10, category_id?: number, search_query?: string) {
+  public async getProducts(
+    page: number = 1, 
+    limit: number = 10, 
+    category_id?: number, 
+    search_query?: string,
+    min_price?: number,
+    max_price?: number
+  ) {
     const skip = (page - 1) * limit;
 
     const where: any = { status: "Active" };
@@ -114,6 +121,12 @@ export class ProductService {
     }
     if (search_query) {
       where.product_name = { contains: search_query };
+    }
+    if (min_price !== undefined || max_price !== undefined) {
+      const priceFilter: any = {};
+      if (min_price !== undefined) priceFilter.gte = min_price;
+      if (max_price !== undefined) priceFilter.lte = max_price;
+      where.variants = { some: { price: priceFilter } };
     }
 
     const [products, total] = await Promise.all([

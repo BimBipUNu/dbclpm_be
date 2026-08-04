@@ -83,21 +83,38 @@ export class OrderController {
   public async payOSWebhook(req: Request, res: Response) {
     try {
       const webhookData = req.body;
-      // TODO: Verify signature với thư viện PayOS (payOS.verifyPaymentWebhookData)
+      const { payOS } = require('../config/payos.config');
       
-      if (webhookData.success) {
-        // orderCode được tạo từ Timestamp + OrderID, ta lấy phần OrderID ở đuôi.
-        // Tùy thuộc vào chiến lược cắt orderCode của bạn.
-        // Ở đây để đơn giản, giả sử PayOS gửi về mã đúng hoặc chúng ta tìm theo số tiền.
-        console.log("[Webhook] Nhận tín hiệu thanh toán thành công:", webhookData);
+      // Xác thực webhook từ PayOS (nếu có lỗi sẽ ném ra exception)
+      const data = payOS.verifyPaymentWebhookData(webhookData);
+      
+      if (data && data.code === '00') {
+        console.log("[Webhook] Nhận tín hiệu thanh toán thành công:", data);
         
-        // Cần ánh xạ lại orderId từ webhookData.data.orderCode.
-        // Đoạn này chỉ mang tính tham khảo khung. 
-        // Thực tế cần query và cập nhật OrderStatus = "Confirmed", PaymentStatus = "Success"
+        // Trích xuất orderId từ orderCode (Bỏ 6 số đầu tiên tạo từ Date.now)
+        const orderCodeStr = String(data.orderCode);
+        const orderId = Number(orderCodeStr.substring(6));
+        
+        if (!isNaN(orderId) && orderId > 0) {
+          // Cập nhật trạng thái đơn hàng
+          await prisma.order.update({
+            where: { order_id: orderId },
+            data: { order_status: "Confirmed" }
+          });
+          
+          // Cập nhật trạng thái thanh toán
+          await prisma.payment.updateMany({
+            where: { order_id: orderId, payment_method: "PayOS" },
+            data: { payment_status: "Success" }
+          });
+          
+          console.log(`[Webhook] Cập nhật thành công đơn hàng #${orderId}`);
+        }
       }
 
       res.status(200).json({ message: "Webhook received" });
     } catch (error) {
+      console.error("[Webhook Error]:", error);
       res.status(400).json({ message: "Invalid webhook" });
     }
   }
