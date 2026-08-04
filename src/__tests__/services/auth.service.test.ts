@@ -33,11 +33,18 @@ describe("Auth Service", () => {
           email: "test@example.com",
           password: "password123",
           full_name: "Test User",
+          otp: "123456",
         })
       ).rejects.toThrow("Email đã được sử dụng!");
     });
 
     it("should register a new user successfully", async () => {
+      // Mock OTP exists
+      (prismaMock as any).oTP = {
+        findFirst: jest.fn().mockResolvedValue({ id: 1, otp: "123456", email: "new@example.com", purpose: "REGISTER" }),
+        delete: jest.fn().mockResolvedValue({}),
+      };
+      
       prismaMock.user.findUnique.mockResolvedValue(null);
       (bcrypt.hash as jest.Mock).mockResolvedValue("hashed_password");
 
@@ -59,6 +66,7 @@ describe("Auth Service", () => {
         email: "new@example.com",
         password: "password123",
         full_name: "New User",
+        otp: "123456"
       });
 
       expect(prismaMock.user.create).toHaveBeenCalledWith({

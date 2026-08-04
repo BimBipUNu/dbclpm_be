@@ -91,6 +91,7 @@ model User {
   wishlists    Wishlist[]
   activity_logs ActivityLog[]
   blogs        Blog[]    @relation("AuthorBlogs")
+  addresses    UserAddress[]
 
   @@map("Users")
 }
@@ -136,6 +137,7 @@ model Product {
   thumbnail      String?      @db.VarChar(255)
   product_type   ProductType
   status         ActiveStatus @default(Active)
+  is_featured    Boolean      @default(false)
   created_at     DateTime?    @default(now())
   updated_at     DateTime?    @updatedAt
 
@@ -464,4 +466,28 @@ model BlogSEO {
   blog             Blog    @relation(fields: [blog_id], references: [blog_id], onDelete: Cascade)
 
   @@map("BlogSEO")
+}
+
+model OTP {
+  id         Int      @id @default(autoincrement())
+  email      String   @db.VarChar(150)
+  otp        String   @db.VarChar(10)
+  purpose    String   @db.VarChar(50) // "REGISTER" hoặc "FORGOT_PASSWORD"
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@index([email, otp])
+  @@map("OTPs")
+}
+
+model UserAddress {
+  address_id Int     @id @default(autoincrement())
+  user_id    Int
+  phone      String  @db.VarChar(20)
+  address    String  @db.VarChar(255)
+  is_default Boolean @default(false)
+
+  user       User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  @@map("UserAddresses")
 }

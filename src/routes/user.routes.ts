@@ -5,11 +5,17 @@ import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware";
 const router = Router();
 const userController = new UserController();
 
-// Require Admin rights to manage users
+// All routes require token
 router.use(verifyToken as any);
-router.use(authorizeRoles("Admin") as any);
 
-router.get("/", userController.getUsers as any);
-router.patch("/:id/status", userController.updateUserStatus as any);
+// Address Book routes (Customer/Logged In User)
+router.get("/addresses", userController.getAddresses as any);
+router.post("/addresses", userController.addAddress as any);
+router.put("/addresses/:id/default", userController.setDefaultAddress as any);
+router.delete("/addresses/:id", userController.deleteAddress as any);
+
+// Admin routes
+router.get("/", authorizeRoles("Admin") as any, userController.getUsers as any);
+router.patch("/:id/status", authorizeRoles("Admin") as any, userController.updateUserStatus as any);
 
 export default router;

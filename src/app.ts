@@ -24,7 +24,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(morgan("dev"));
-app.use(express.json()); // Parse JSON body
+app.use(express.json({ limit: '50mb' })); // Parse JSON body with higher limit for rich text base64 images
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);

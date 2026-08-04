@@ -54,7 +54,11 @@ export class ProductController {
       if (minPrice !== undefined && isNaN(minPrice)) minPrice = undefined;
       if (maxPrice !== undefined && isNaN(maxPrice)) maxPrice = undefined;
 
-      const result = await productService.getProducts(page, limit, categoryId, searchQuery, minPrice, maxPrice);
+      let isFeatured: boolean | undefined = undefined;
+      if (req.query.is_featured === 'true') isFeatured = true;
+      if (req.query.is_featured === 'false') isFeatured = false;
+
+      const result = await productService.getProducts(page, limit, categoryId, searchQuery, minPrice, maxPrice, isFeatured);
       res.status(200).json(result);
     } catch (error: any) {
       res.status(500).json({ message: error.message || "Lỗi hệ thống" });

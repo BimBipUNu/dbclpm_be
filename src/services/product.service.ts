@@ -16,6 +16,7 @@ export class ProductService {
           description: data.description ?? null,
           thumbnail: data.thumbnail ?? null,
           product_type: data.product_type,
+          is_featured: data.is_featured ?? false,
           // Liên kết với các Categories
           categories: {
             create: data.category_ids.map((id) => ({ category_id: id })),
@@ -111,7 +112,8 @@ export class ProductService {
     category_id?: number, 
     search_query?: string,
     min_price?: number,
-    max_price?: number
+    max_price?: number,
+    is_featured?: boolean
   ) {
     const skip = (page - 1) * limit;
 
@@ -121,6 +123,9 @@ export class ProductService {
     }
     if (search_query) {
       where.product_name = { contains: search_query };
+    }
+    if (is_featured !== undefined) {
+      where.is_featured = is_featured;
     }
     if (min_price !== undefined || max_price !== undefined) {
       const priceFilter: any = {};
@@ -168,6 +173,7 @@ export class ProductService {
           description: data.description ?? null,
           thumbnail: data.thumbnail ?? null,
           product_type: data.product_type,
+          is_featured: data.is_featured ?? false,
         },
       });
 

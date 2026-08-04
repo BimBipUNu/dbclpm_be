@@ -31,4 +31,5 @@ export interface CreateProductInput {
   options: OptionInput[];
   variants: VariantInput[];
   images?: string[];
+  is_featured?: boolean;
 }
